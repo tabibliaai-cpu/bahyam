@@ -17,6 +17,11 @@ function getDb(): Client {
   return globalForDb.db;
 }
 
+// Safe stub that returns empty results instead of throwing
+function stubExecute() {
+  return Promise.resolve({ rows: [] });
+}
+
 export const db = new Proxy({} as Client, {
   get(_target, prop, receiver) {
     try {
@@ -25,10 +30,10 @@ export const db = new Proxy({} as Client, {
       if (typeof value === 'function') return value.bind(client);
       return value;
     } catch {
-      return () => {
-        throw new Error('Database not configured');
-      };
-    };
+      // When DB is not configured, return safe stubs
+      if (prop === 'execute') return stubExecute;
+      return undefined;
+    }
   },
 });
 
