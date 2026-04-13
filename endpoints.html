@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bahyam - Endpoints</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📡</text></svg>">
+</head>
+<body>
+    <div id="sidebarOverlay" class="sidebar-overlay"></div>
+    <aside id="sidebar" class="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-logo">B</div>
+            <div class="sidebar-brand">Bahyam<span>API Monitor</span></div>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="nav-section">Monitoring</div>
+            <a href="index.html" class="nav-item"><i class="fa-solid fa-chart-line"></i> Dashboard</a>
+            <a href="endpoints.html" class="nav-item active"><i class="fa-solid fa-server"></i> Endpoints <span class="nav-badge" id="epBadge">8</span></a>
+            <a href="logs.html" class="nav-item"><i class="fa-solid fa-scroll"></i> Logs</a>
+            <a href="alerts.html" class="nav-item"><i class="fa-solid fa-bell"></i> Alerts <span class="nav-badge" id="navAlertBadge">3</span></a>
+            <div class="nav-section">System</div>
+            <a href="settings.html" class="nav-item"><i class="fa-solid fa-gear"></i> Settings</a>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="sidebar-avatar">A</div>
+            <div class="sidebar-user"><div class="sidebar-user-name">Admin</div><div class="sidebar-user-role">Administrator</div></div>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <header class="page-header">
+            <div class="page-header-left">
+                <button id="menuToggle" class="menu-toggle"><i class="fa-solid fa-bars"></i></button>
+                <div>
+                    <div class="page-title">Endpoints</div>
+                    <div class="page-subtitle">Manage and monitor your API endpoints</div>
+                </div>
+            </div>
+            <div class="page-header-right">
+                <button class="header-btn primary" id="addEndpointBtn">
+                    <i class="fa-solid fa-plus"></i> <span>Add Endpoint</span>
+                </button>
+            </div>
+        </header>
+
+        <div class="page-body">
+            <div class="table-card">
+                <div class="table-card-header">
+                    <div class="filter-bar">
+                        <span class="filter-chip active" data-filter="all">All (<span id="countAll">0</span>)</span>
+                        <span class="filter-chip" data-filter="up" style="color:var(--success);">Up (<span id="countUp">0</span>)</span>
+                        <span class="filter-chip" data-filter="degraded" style="color:var(--warning);">Degraded (<span id="countDegraded">0</span>)</span>
+                        <span class="filter-chip" data-filter="down" style="color:var(--danger);">Down (<span id="countDown">0</span>)</span>
+                    </div>
+                    <div class="table-search">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="text" id="endpointSearch" placeholder="Search endpoints...">
+                    </div>
+                </div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Method</th>
+                            <th>Endpoint</th>
+                            <th>Status</th>
+                            <th>Response Time</th>
+                            <th>Uptime</th>
+                            <th>Last Checked</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="endpointsTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Add Endpoint Modal -->
+    <div id="addEndpointModal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title">Add New Endpoint</div>
+                <button class="modal-close" id="closeModal"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="addEndpointForm">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label">Endpoint Name</label>
+                        <input type="text" class="form-input" id="epName" placeholder="e.g. User API" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">URL Path</label>
+                        <input type="text" class="form-input" id="epUrl" placeholder="/api/v1/users" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">HTTP Method</label>
+                        <select class="form-select" id="epMethod">
+                            <option value="GET">GET</option>
+                            <option value="POST">POST</option>
+                            <option value="PUT">PUT</option>
+                            <option value="DELETE">DELETE</option>
+                            <option value="PATCH">PATCH</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="EndpointsPage.closeModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Add Endpoint</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+    <script src="js/endpoints.js"></script>
+</body>
+</html>
