@@ -41,6 +41,13 @@ yarn-error.log*
 # Upload temp files
 upload/
 
+# Turso local
+db/
+*.tsbuildinfo
+
+# Z scripts
+.zscripts/dev.pid
+
 # Logs
 dev.log
 server.log
