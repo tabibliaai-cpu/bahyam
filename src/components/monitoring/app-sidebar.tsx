@@ -10,13 +10,13 @@ import {
   Activity,
   X,
   Zap,
+  Radio,
 } from 'lucide-react';
 import { useAppStore } from '@/stores/app-store';
 import type { ViewType } from '@/lib/monitoring-types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
-import { getAlertEvents } from '@/lib/monitoring-data';
+import { getAlertEvents, getSettings } from '@/lib/monitoring-data';
 
 const navItems: { icon: React.ElementType; label: string; view: ViewType }[] = [
   { icon: LayoutDashboard, label: 'Dashboard', view: 'dashboard' },
@@ -30,29 +30,25 @@ export function AppSidebar() {
   const { currentView, setCurrentView, sidebarOpen, setSidebarOpen } = useAppStore();
 
   const unacknowledgedCount = typeof window !== 'undefined'
-    ? getAlertEvents().filter((e) => !e.acknowledged).length
+    ? getAlertEvents().filter(e => !e.acknowledged).length
     : 0;
+
+  const settings = typeof window !== 'undefined' ? getSettings() : null;
+  const isLive = settings?.monitoringEnabled ?? true;
 
   return (
     <>
-      {/* Mobile overlay */}
       {sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
+        <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />
       )}
 
-      {/* Sidebar */}
-      <aside
-        className={`
-          fixed top-0 left-0 z-50 h-full w-64
-          bg-card border-r border-border
-          flex flex-col transition-transform duration-300 ease-in-out
-          lg:translate-x-0 lg:static lg:z-auto
-          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-        `}
-      >
+      <aside className={`
+        fixed top-0 left-0 z-50 h-full w-64
+        bg-card border-r border-border
+        flex flex-col transition-transform duration-300 ease-in-out
+        lg:translate-x-0 lg:static lg:z-auto
+        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+      `}>
         {/* Logo */}
         <div className="flex items-center gap-3 px-5 h-16 border-b border-border shrink-0">
           <div className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center">
@@ -62,12 +58,7 @@ export function AppSidebar() {
             <h1 className="text-sm font-bold text-foreground truncate">API Monitor</h1>
             <p className="text-[10px] text-muted-foreground">by bahyam.com</p>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="lg:hidden h-8 w-8"
-            onClick={() => setSidebarOpen(false)}
-          >
+          <Button variant="ghost" size="icon" className="lg:hidden h-8 w-8" onClick={() => setSidebarOpen(false)}>
             <X className="w-4 h-4" />
           </Button>
         </div>
@@ -94,10 +85,7 @@ export function AppSidebar() {
                 <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-emerald-400' : ''}`} />
                 <span className="flex-1 text-left">{label}</span>
                 {badge && (
-                  <Badge
-                    variant="destructive"
-                    className="h-5 min-w-[20px] flex items-center justify-center text-[10px] px-1.5"
-                  >
+                  <Badge variant="destructive" className="h-5 min-w-[20px] flex items-center justify-center text-[10px] px-1.5">
                     {badge}
                   </Badge>
                 )}
@@ -107,11 +95,13 @@ export function AppSidebar() {
         </nav>
 
         {/* Footer */}
-        <div className="px-3 py-3 border-t border-border shrink-0">
-          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/50">
-            <Zap className="w-4 h-4 text-emerald-400" />
-            <span className="text-xs text-muted-foreground">System Online</span>
-            <span className="ml-auto w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+        <div className="px-3 py-3 border-t border-border shrink-0 space-y-2">
+          <div className={`flex items-center gap-2 px-3 py-2 rounded-lg ${isLive ? 'bg-emerald-500/10 border border-emerald-500/20' : 'bg-red-500/10 border border-red-500/20'}`}>
+            <Radio className={`w-4 h-4 ${isLive ? 'text-emerald-400' : 'text-red-400'}`} />
+            <span className={`text-xs font-medium ${isLive ? 'text-emerald-400' : 'text-red-400'}`}>
+              {isLive ? 'Live Monitoring' : 'Monitoring Paused'}
+            </span>
+            <span className={`ml-auto w-2 h-2 rounded-full ${isLive ? 'bg-emerald-400 animate-pulse' : 'bg-red-400'}`} />
           </div>
         </div>
       </aside>

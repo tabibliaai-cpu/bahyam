@@ -11,7 +11,7 @@ import { LogsView } from '@/components/monitoring/logs-view';
 import { AlertsView } from '@/components/monitoring/alerts-view';
 import { SettingsView } from '@/components/monitoring/settings-view';
 import { useAppStore } from '@/stores/app-store';
-import { initializeData } from '@/lib/monitoring-data';
+import { initializeData, runLiveChecks, getSettings } from '@/lib/monitoring-data';
 
 function AppContent() {
   const { currentView } = useAppStore();
@@ -23,8 +23,13 @@ function AppContent() {
     initializeData();
   }, []);
 
-  const handleRefresh = useCallback(() => {
+  const handleRefresh = useCallback(async () => {
     setRefreshing(true);
+    try {
+      await runLiveChecks();
+    } catch {
+      // silent
+    }
     setTimeout(() => setRefreshing(false), 500);
   }, []);
 
