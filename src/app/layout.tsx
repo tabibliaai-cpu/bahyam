@@ -4,6 +4,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "WhisperLink — Real conversations. Zero identity.",
   description: "Instant anonymous chat with real strangers. No account. No history. No trace.",
+  other: { version: 'v2' },
 };
 
 export default function RootLayout({
