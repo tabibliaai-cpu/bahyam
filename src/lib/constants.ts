@@ -1,0 +1,17 @@
+export const INTERESTS = [
+  { id: 'gaming', label: 'Gaming', emoji: '🎮' },
+  { id: 'music', label: 'Music', emoji: '🎵' },
+  { id: 'movies', label: 'Movies', emoji: '🎬' },
+  { id: 'sports', label: 'Sports', emoji: '⚽' },
+  { id: 'tech', label: 'Tech', emoji: '💻' },
+  { id: 'art', label: 'Art', emoji: '🎨' },
+  { id: 'travel', label: 'Travel', emoji: '✈️' },
+  { id: 'food', label: 'Food', emoji: '🍕' },
+  { id: 'books', label: 'Books', emoji: '📚' },
+  { id: 'crypto', label: 'Crypto', emoji: '₿' },
+  { id: 'fitness', label: 'Fitness', emoji: '💪' },
+  { id: 'science', label: 'Science', emoji: '🔬' },
+  { id: 'anime', label: 'Anime', emoji: '⛩️' },
+  { id: 'fashion', label: 'Fashion', emoji: '👗' },
+  { id: 'photography', label: 'Photography', emoji: '📸' },
+]

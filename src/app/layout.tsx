@@ -1,39 +1,27 @@
-import type { Metadata, Viewport } from "next";
-import { Inter, JetBrains_Mono } from "next/font/google";
+import type { Metadata } from "next";
 import "./globals.css";
 
-const inter = Inter({
-  variable: "--font-inter",
-  subsets: ["latin"],
-});
-
-const jetbrainsMono = JetBrains_Mono({
-  variable: "--font-mono",
-  subsets: ["latin"],
-});
-
 export const metadata: Metadata = {
-  title: "PulseAPI — Monitor. Predict. Never Go Down.",
-  description: "AI-powered API monitoring with a real-time public marketplace. Watch 20+ APIs being monitored live, predict failures before they happen, and pay with Bitcoin.",
-  keywords: ["API Monitoring", "Uptime", "AI", "Marketplace", "Bitcoin", "Real-time"],
-  icons: { icon: "/logo.svg" },
-  openGraph: {
-    title: "PulseAPI — Monitor. Predict. Never Go Down.",
-    description: "AI-powered API monitoring with real-time marketplace.",
-    type: "website",
-  },
+  title: "WhisperLink — Real conversations. Zero identity.",
+  description: "Instant anonymous chat with real strangers. No account. No history. No trace.",
 };
 
-export const viewport: Viewport = {
-  width: "device-width",
-  initialScale: 1,
-  maximumScale: 1,
-};
-
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.variable} ${jetbrainsMono.variable} antialiased`}>
+    <html lang="en">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+          rel="stylesheet"
+        />
+      </head>
+      <body className="antialiased">
         {children}
       </body>
     </html>
