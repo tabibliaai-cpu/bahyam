@@ -283,15 +283,17 @@ export default function ChatPage() {
       isFindingRef.current = false
       setChatState('idle')
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user])
 
-  /* Start finding when user is set and state is idle */
+  /* FIX: removed startFinding from deps to prevent infinite re-trigger loop */
   useEffect(() => {
     if (user && chatState === 'idle') {
       const timer = setTimeout(() => startFinding(), 300)
       return () => clearTimeout(timer)
     }
-  }, [user, chatState, startFinding])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, chatState])
 
   /* ════════════════════════════════════════════════════════
      MATCHED → CHATTING TRANSITION
@@ -337,6 +339,35 @@ export default function ChatPage() {
     },
     [user],
   )
+
+  /* ════════════════════════════════════════════════════════
+     WATCHDOG HEARTBEAT (every 30s while finding or chatting)
+     Keeps last_seen alive so cron/matchmaker won't kill the room
+     ════════════════════════════════════════════════════════ */
+  useEffect(() => {
+    if ((chatState !== 'chatting' && chatState !== 'finding') || !user) return
+
+    const ping = async () => {
+      try {
+        const body: Record<string, string> = { userId: user.id }
+        if (currentRoomIdRef.current) body.roomId = currentRoomIdRef.current
+        const res = await fetch('/api/wl/watchdog', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        })
+        const data = await res.json()
+        // If watchdog says room ended (not by us), trigger disconnect
+        if (data.roomStatus && data.roomStatus !== 'active' && currentRoomIdRef.current) {
+          setChatState('disconnected')
+        }
+      } catch {}
+    }
+
+    ping() // immediate on state entry
+    const interval = setInterval(ping, 30_000)
+    return () => clearInterval(interval)
+  }, [chatState, user])
 
   /* ════════════════════════════════════════════════════════
      MESSAGE POLLING (every 800ms while chatting)
@@ -594,6 +625,7 @@ export default function ChatPage() {
 
   /* ════════════════════════════════════════════════════════
      REPORT
+     FIX: removed duplicate setChatState('finding') before startFinding()
      ════════════════════════════════════════════════════════ */
   const handleSubmitReport = useCallback(async () => {
     if (!user || !stranger || !roomId || !reportReason) return
@@ -615,15 +647,15 @@ export default function ChatPage() {
     setReportReason('')
     setReportDetails('')
 
-    // Reset and start finding
+    // Reset state
     setStranger(null)
     setRoomId(null)
     currentRoomIdRef.current = null
     isFindingRef.current = false
     setMessages([])
 
+    // FIX: only call startFinding — it sets chatState internally; avoid race condition
     setTimeout(() => {
-      setChatState('finding')
       startFinding()
     }, 100)
   }, [user, stranger, roomId, reportReason, reportDetails, startFinding])
@@ -896,7 +928,6 @@ export default function ChatPage() {
           MESSAGE AREA
           ════════════════════════════════════════════════ */}
       <div
-        ref={messageContainerRef}
         className="flex-1 overflow-y-auto relative"
         style={{ background: '#08090E' }}
       >
@@ -1106,6 +1137,7 @@ export default function ChatPage() {
         {/* ── CHATTING STATE — MESSAGES ── */}
         {(chatState === 'chatting' || chatState === 'disconnected') && (
           <div className="flex flex-col h-full">
+            {/* FIX: single ref on the correct scroll container only */}
             <div className="flex-1 overflow-y-auto px-3 md:px-6 py-4" ref={messageContainerRef}>
               <div className="max-w-3xl mx-auto space-y-1">
                 {messages.map((msg, idx) => {
