@@ -1,591 +1,362 @@
-'use client'
+'use client';
 
-import { useState, useEffect, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
-import { Github, Zap, Sparkles, Ghost, Check, MessageCircle, ChevronRight } from 'lucide-react'
+import { useEffect, useState, useRef, useCallback } from 'react';
+import Link from 'next/link';
 
-/* ─── Constants ─── */
-
-const INTERESTS = [
-  { id: 'gaming', label: 'Gaming', emoji: '🎮' },
-  { id: 'music', label: 'Music', emoji: '🎵' },
-  { id: 'movies', label: 'Movies', emoji: '🎬' },
-  { id: 'sports', label: 'Sports', emoji: '⚽' },
-  { id: 'tech', label: 'Tech', emoji: '💻' },
-  { id: 'art', label: 'Art', emoji: '🎨' },
-  { id: 'travel', label: 'Travel', emoji: '✈️' },
-  { id: 'food', label: 'Food', emoji: '🍕' },
-  { id: 'books', label: 'Books', emoji: '📚' },
-  { id: 'crypto', label: 'Crypto', emoji: '₿' },
-  { id: 'fitness', label: 'Fitness', emoji: '💪' },
-  { id: 'science', label: 'Science', emoji: '🔬' },
-]
-
-const ACTIVITY_MESSAGES = [
-  { text: 'Cosmic Fox and Shadow Wolf just connected', type: 'match' },
-  { text: 'Electric Dragon found a match', type: 'match' },
-  { text: '1,247 messages sent in the last minute', type: 'stats' },
-  { text: 'Phantom Raven is chatting about Music', type: 'topic' },
-  { text: 'Neon Tiger and Crystal Owl started talking', type: 'match' },
-  { text: 'Silver Hawk is discussing Tech', type: 'topic' },
-  { text: 'Midnight Wolf just started their 5th chat', type: 'match' },
-  { text: 'Azure Phoenix is exploring Gaming topics', type: 'topic' },
-  { text: '3,891 active conversations happening now', type: 'stats' },
-  { text: 'Storm Falcon and Lunar Bear just connected', type: 'match' },
-  { text: 'Golden Eagle found someone who loves Books', type: 'topic' },
-  { text: 'Dark Viper is chatting about Crypto', type: 'topic' },
-]
-
-const FEATURES = [
-  {
-    icon: <Zap className="w-6 h-6" />,
-    title: 'Instant Match',
-    description:
-      'Connect with a stranger in under 3 seconds. Our smart matching algorithm finds the best partner based on your interests.',
-  },
-  {
-    icon: <Sparkles className="w-6 h-6" />,
-    title: 'AI Ice Breakers',
-    description:
-      'Never run out of things to say. Our AI generates personalized conversation starters based on shared interests. (Premium)',
-  },
-  {
-    icon: <Ghost className="w-6 h-6" />,
-    title: 'Zero Trace',
-    description:
-      'No logs, no profiles, no history kept. Your conversations vanish the moment you disconnect. Complete anonymity.',
-  },
-]
-
-/* ─── Component ─── */
-
-export default function LandingPage() {
-  const router = useRouter()
-  
-  const [onlineUsers, setOnlineUsers] = useState(0)
-  const [selectedInterests, setSelectedInterests] = useState<string[]>([])
-  const [activityMessage, setActivityMessage] = useState(ACTIVITY_MESSAGES[0])
-  const [activityFade, setActivityFade] = useState(true)
-  const [statsLoaded, setStatsLoaded] = useState(false)
-
-  /* Enable scrolling for this page (override globals.css body overflow) */
-  useEffect(() => {
-    const html = document.documentElement
-    const body = document.body
-    html.style.overflow = 'auto'
-    html.style.height = 'auto'
-    body.style.overflow = 'auto'
-    body.style.height = 'auto'
-    return () => {
-      html.style.overflow = 'hidden'
-      html.style.height = '100dvh'
-      body.style.overflow = 'hidden'
-      body.style.height = '100dvh'
-    }
-  }, [])
-
-  /* Fetch live stats */
-  const fetchStats = useCallback(async () => {
-    try {
-      const res = await fetch('/api/wl/stats')
-      const data = await res.json()
-      setOnlineUsers(data.onlineUsers ?? 0)
-      setStatsLoaded(true)
-    } catch {
-      setOnlineUsers(0)
-    }
-  }, [])
-
-  useEffect(() => {
-    fetchStats()
-    const interval = setInterval(fetchStats, 10_000)
-    return () => clearInterval(interval)
-  }, [fetchStats])
-
-  /* Activity feed cycling */
-  useEffect(() => {
-    let idx = 0
-    const cycle = () => {
-      setActivityFade(false)
-      setTimeout(() => {
-        idx = (idx + 1) % ACTIVITY_MESSAGES.length
-        setActivityMessage(ACTIVITY_MESSAGES[idx])
-        setActivityFade(true)
-      }, 400)
-    }
-    const interval = setInterval(cycle, 4000)
-    return () => clearInterval(interval)
-  }, [])
-
-  /* Interest selection (max 3) */
-  const toggleInterest = (id: string) => {
-    setSelectedInterests((prev) => {
-      if (prev.includes(id)) return prev.filter((i) => i !== id)
-      if (prev.length >= 3) return prev
-      return [...prev, id]
-    })
-  }
-
-  /* Start chat */
-  const handleStartChat = () => {
-    if (selectedInterests.length > 0) {
-      localStorage.setItem('wl_interests', JSON.stringify(selectedInterests))
-    } else {
-      localStorage.removeItem('wl_interests')
-    }
-    router.push('/chat')
-  }
-
+/* ========== NAVBAR ========== */
+function Navbar() {
+  const [open, setOpen] = useState(false);
   return (
-    <div className="min-h-screen" style={{ background: 'var(--color-bg)', color: 'var(--color-text-primary)' }}>
-      {/* ─── Inline keyframes for orb float animations ─── */}
-      <style>{`
-        @keyframes float-1 {
-          0%, 100% { transform: translate(0, 0) scale(1); }
-          25% { transform: translate(30px, -40px) scale(1.05); }
-          50% { transform: translate(-20px, -60px) scale(0.95); }
-          75% { transform: translate(40px, -30px) scale(1.02); }
-        }
-        @keyframes float-2 {
-          0%, 100% { transform: translate(0, 0) scale(1); }
-          25% { transform: translate(-40px, 20px) scale(0.98); }
-          50% { transform: translate(30px, 40px) scale(1.04); }
-          75% { transform: translate(-20px, 10px) scale(1); }
-        }
-        @keyframes float-3 {
-          0%, 100% { transform: translate(0, 0) scale(1); }
-          33% { transform: translate(50px, -30px) scale(1.06); }
-          66% { transform: translate(-30px, 20px) scale(0.96); }
-        }
-        @keyframes activity-fade {
-          0% { opacity: 0; transform: translateY(6px); }
-          100% { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes btn-glow {
-          0%, 100% { box-shadow: 0 0 0 0 rgba(139,92,246,0.5), 0 4px 15px rgba(139,92,246,0.3); }
-          50% { box-shadow: 0 0 25px 5px rgba(139,92,246,0.25), 0 4px 20px rgba(139,92,246,0.4); }
-        }
-        @keyframes counter-pulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.7; }
-        }
-      `}</style>
-
-      {/* ════════════════════════════════════════════════
-          NAVBAR
-      ════════════════════════════════════════════════ */}
-      <nav
-        className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 md:px-8 h-16"
-        style={{
-          background: 'rgba(8,9,14,0.75)',
-          backdropFilter: 'blur(16px)',
-          WebkitBackdropFilter: 'blur(16px)',
-          borderBottom: '1px solid var(--color-border)',
-        }}
-      >
-        {/* Logo */}
-        <div className="flex items-center gap-3">
-          <div
-            className="flex items-center justify-center w-9 h-9 rounded-lg font-black text-white text-lg"
-            style={{
-              background: 'linear-gradient(135deg, #8B5CF6, #6366F1)',
-            }}
-          >
-            W
-          </div>
-          <span className="hidden sm:block font-bold text-lg tracking-tight" style={{ color: 'var(--color-text-primary)' }}>
-            WhisperLink
-          </span>
+    <nav className="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl border-b" style={{ background: 'rgba(10,15,30,0.85)', borderColor: 'var(--border)' }}>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+        <Link href="/" className="flex items-center gap-2 font-bold text-lg">
+          <span className="dot dot-up" style={{ width: 10, height: 10 }} />
+          <span>PulseAPI</span>
+        </Link>
+        <div className="hidden md:flex items-center gap-8 text-sm" style={{ color: 'var(--text-secondary)' }}>
+          <Link href="/live" className="hover:text-white transition">Live Feed</Link>
+          <Link href="/marketplace" className="hover:text-white transition">Marketplace</Link>
+          <Link href="/pricing" className="hover:text-white transition">Pricing</Link>
+          <Link href="/advertise" className="hover:text-white transition">Advertise</Link>
         </div>
-
-        {/* Right actions */}
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => router.push('/premium')}
-            className="px-4 py-2 rounded-lg text-sm font-semibold text-white transition-all duration-200 hover:scale-105 cursor-pointer"
-            style={{ background: 'linear-gradient(135deg, #8B5CF6, #6366F1)' }}
-          >
-            Go Premium
-          </button>
-          <a
-            href="https://github.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="p-2 rounded-lg transition-colors duration-200"
-            style={{ color: 'var(--color-text-muted)' }}
-            aria-label="GitHub"
-          >
-            <Github className="w-5 h-5" />
-          </a>
+        <div className="hidden md:flex items-center gap-3">
+          <Link href="/dashboard" className="px-4 py-2 text-sm rounded-lg border transition hover:bg-white/5" style={{ borderColor: 'var(--border)' }}>Login</Link>
+          <Link href="/dashboard" className="px-4 py-2 text-sm rounded-lg text-white font-medium transition" style={{ background: 'var(--accent)' }}>Start Free</Link>
         </div>
-      </nav>
+        <button onClick={() => setOpen(!open)} className="md:hidden p-2" aria-label="Menu">
+          <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 6h16M4 12h16M4 18h16" /></svg>
+        </button>
+      </div>
+      {open && (
+        <div className="md:hidden absolute top-16 left-0 right-0 p-4 flex flex-col gap-3 border-b" style={{ background: 'var(--bg-primary)', borderColor: 'var(--border)' }}>
+          <Link href="/live" className="py-2 px-4 rounded-lg hover:bg-white/5" onClick={() => setOpen(false)}>Live Feed</Link>
+          <Link href="/marketplace" className="py-2 px-4 rounded-lg hover:bg-white/5" onClick={() => setOpen(false)}>Marketplace</Link>
+          <Link href="/pricing" className="py-2 px-4 rounded-lg hover:bg-white/5" onClick={() => setOpen(false)}>Pricing</Link>
+          <Link href="/dashboard" className="py-2 px-4 rounded-lg text-center font-medium text-white" style={{ background: 'var(--accent)' }} onClick={() => setOpen(false)}>Start Free</Link>
+        </div>
+      )}
+    </nav>
+  );
+}
 
-      {/* ════════════════════════════════════════════════
-          HERO SECTION
-      ════════════════════════════════════════════════ */}
-      <section className="relative min-h-screen flex items-center justify-center overflow-hidden px-4 pt-16">
-        {/* Background orbs */}
-        <div
-          className="absolute rounded-full pointer-events-none"
-          style={{
-            width: 300,
-            height: 300,
-            top: '10%',
-            left: '15%',
-            background: 'radial-gradient(circle, rgba(139,92,246,0.3), rgba(99,102,241,0.15), transparent 70%)',
-            filter: 'blur(80px)',
-            opacity: 0.2,
-            animation: 'float-1 20s ease-in-out infinite',
-          }}
-        />
-        <div
-          className="absolute rounded-full pointer-events-none"
-          style={{
-            width: 250,
-            height: 250,
-            top: '60%',
-            right: '10%',
-            background: 'radial-gradient(circle, rgba(99,102,241,0.35), rgba(139,92,246,0.1), transparent 70%)',
-            filter: 'blur(70px)',
-            opacity: 0.18,
-            animation: 'float-2 25s ease-in-out infinite',
-          }}
-        />
-        <div
-          className="absolute rounded-full pointer-events-none"
-          style={{
-            width: 200,
-            height: 200,
-            bottom: '15%',
-            left: '40%',
-            background: 'radial-gradient(circle, rgba(168,85,247,0.25), rgba(79,70,229,0.1), transparent 70%)',
-            filter: 'blur(60px)',
-            opacity: 0.15,
-            animation: 'float-3 22s ease-in-out infinite',
-          }}
-        />
+/* ========== ANIMATED NUMBER ========== */
+function AnimatedNumber({ value, suffix = '' }: { value: number; suffix?: string }) {
+  const [display, setDisplay] = useState(0);
+  const ref = useRef<HTMLSpanElement>(null);
+  const hasAnimated = useRef(false);
 
-        {/* Hero content */}
-        <div className="relative z-10 flex flex-col items-center text-center max-w-2xl mx-auto">
-          {/* Live counter */}
-          <div
-            className="flex items-center gap-2 mb-8 px-4 py-2 rounded-full text-sm font-medium"
-            style={{
-              background: 'rgba(16,185,129,0.1)',
-              border: '1px solid rgba(16,185,129,0.2)',
-              color: '#10B981',
-              animation: statsLoaded ? 'fadeIn 0.5s ease-out' : undefined,
-            }}
-          >
-            <span
-              className="w-2 h-2 rounded-full inline-block"
-              style={{
-                background: '#10B981',
-                animation: 'counter-pulse 2s ease-in-out infinite',
-              }}
-            />
-            <span>{onlineUsers.toLocaleString()} people chatting right now</span>
+  useEffect(() => {
+    if (hasAnimated.current) { setDisplay(value); return; }
+    hasAnimated.current = true;
+    const duration = 1500;
+    const start = Date.now();
+    const tick = () => {
+      const elapsed = Date.now() - start;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setDisplay(Math.round(eased * value));
+      if (progress < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }, [value]);
+
+  return <span ref={ref}>{display.toLocaleString()}{suffix}</span>;
+}
+
+function Hero() {
+  return (
+    <section className="relative pt-32 pb-20 px-4 overflow-hidden">
+      <div className="absolute inset-0 opacity-30" style={{ background: 'radial-gradient(ellipse at 50% 0%, rgba(59,130,246,0.15) 0%, transparent 70%)' }} />
+      <div className="max-w-4xl mx-auto text-center relative z-10">
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm mb-8 border" style={{ borderColor: 'var(--border)', color: 'var(--text-secondary)', background: 'var(--bg-secondary)' }}>
+          <span className="text-yellow-400">&#9889;</span> Real-time API monitoring powered by AI
+        </div>
+        <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold mb-6 leading-tight">
+          Your APIs Are <span className="bg-clip-text text-transparent" style={{ backgroundImage: 'linear-gradient(135deg, #3B82F6, #8B5CF6)' }}>Lying To You.</span>
+        </h1>
+        <p className="text-lg sm:text-xl mb-8 max-w-2xl mx-auto" style={{ color: 'var(--text-secondary)' }}>
+          PulseAPI monitors every API in your stack 24/7, predicts failures before they happen, and tells you exactly how to fix them — in real time.
+        </p>
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
+          <Link href="/dashboard" className="px-8 py-3 rounded-lg text-white font-semibold text-lg transition hover:opacity-90" style={{ background: 'var(--accent)' }}>
+            Monitor Free
+          </Link>
+          <Link href="/live" className="px-8 py-3 rounded-lg font-semibold text-lg border transition hover:bg-white/5" style={{ borderColor: 'var(--border)' }}>
+            See Live Feed &rarr;
+          </Link>
+        </div>
+        <div className="flex flex-wrap items-center justify-center gap-6 text-sm" style={{ color: 'var(--text-tertiary)' }}>
+          <span>&#10003; No credit card required</span>
+          <span>&#10003; Setup in 2 minutes</span>
+          <span>&#10003; Pay with Bitcoin</span>
+        </div>
+        <div className="mt-12 rounded-xl border p-4 text-left hidden sm:block" style={{ background: 'var(--bg-card)', borderColor: 'var(--border)' }}>
+          <div className="flex items-center gap-2 mb-3">
+            <span className="dot dot-up" style={{ width: 8, height: 8 }} />
+            <span className="text-sm font-medium">Live Preview</span>
+            <span className="text-xs ml-auto" style={{ color: 'var(--text-tertiary)' }}>Updating...</span>
           </div>
-
-          {/* Headline */}
-          <h1 className="text-5xl md:text-7xl font-black leading-[1.1] tracking-tight mb-4">
-            <span style={{ color: 'var(--color-text-primary)' }}>Talk to anyone.</span>
-            <br />
-            <span
-              className="inline-block"
-              style={{
-                background: 'linear-gradient(135deg, #8B5CF6, #6366F1, #818CF8)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-              }}
-            >
-              Be nobody.
-            </span>
-          </h1>
-
-          {/* Subheadline */}
-          <p className="text-lg md:text-xl mb-10 max-w-lg leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
-            Instant anonymous chat with real strangers. No account. No history. No trace.
-          </p>
-
-          {/* Start button */}
-          <button
-            onClick={handleStartChat}
-            className="w-full sm:w-[280px] h-14 rounded-xl text-white font-semibold text-lg flex items-center justify-center gap-2 transition-all duration-300 hover:scale-[1.03] cursor-pointer"
-            style={{
-              background: 'linear-gradient(135deg, #8B5CF6, #6366F1)',
-              animation: 'btn-glow 3s ease-in-out infinite',
-            }}
-          >
-            <MessageCircle className="w-5 h-5" />
-            Start Chatting
-            <ChevronRight className="w-4 h-4" />
-          </button>
-
-          {/* Trust badges */}
-          <div className="flex flex-wrap justify-center gap-4 mt-6 mb-10">
-            {[
-              { icon: '🔒', text: 'End-to-End Encrypted' },
-              { icon: '👤', text: 'Zero Identity' },
-              { icon: '⚡', text: 'Instant Match' },
-            ].map((badge) => (
-              <span
-                key={badge.text}
-                className="flex items-center gap-1.5 text-xs sm:text-sm"
-                style={{ color: 'var(--color-text-muted)' }}
-              >
-                <span>{badge.icon}</span>
-                <span>{badge.text}</span>
-              </span>
+          <div className="grid grid-cols-3 gap-3">
+            {['Stripe', 'GitHub', 'OpenAI'].map(name => (
+              <div key={name} className="rounded-lg p-3 border" style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border)' }}>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="dot dot-up" style={{ width: 6, height: 6 }} />
+                  <span className="text-xs font-medium">{name}</span>
+                </div>
+                <div className="text-lg font-bold" style={{ color: 'var(--success)' }}>UP</div>
+                <div className="text-xs" style={{ color: 'var(--text-tertiary)' }}>Checking...</div>
+              </div>
             ))}
           </div>
-
-          {/* Interest selector */}
-          <div className="w-full max-w-lg">
-            <p className="text-sm mb-3" style={{ color: 'var(--color-text-muted)' }}>
-              Find people who like:
-            </p>
-            <div className="flex flex-wrap justify-center gap-2">
-              {INTERESTS.map((interest) => {
-                const isSelected = selectedInterests.includes(interest.id)
-                return (
-                  <button
-                    key={interest.id}
-                    onClick={() => toggleInterest(interest.id)}
-                    className="px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200 cursor-pointer border"
-                    style={{
-                      borderColor: isSelected ? '#8B5CF6' : 'var(--color-border)',
-                      background: isSelected ? 'rgba(139,92,246,0.15)' : 'transparent',
-                      color: isSelected ? '#c4b5fd' : 'var(--color-text-secondary)',
-                    }}
-                  >
-                    {interest.emoji} {interest.label}
-                  </button>
-                )
-              })}
-            </div>
-            {selectedInterests.length > 0 && (
-              <p className="text-xs mt-2" style={{ color: 'var(--color-text-muted)' }}>
-                {selectedInterests.length}/3 selected
-              </p>
-            )}
-          </div>
         </div>
+      </div>
+    </section>
+  );
+}
 
-        {/* Scroll indicator */}
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 opacity-40">
-          <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>Scroll to explore</span>
-          <div className="w-5 h-8 rounded-full border-2 flex items-start justify-center p-1" style={{ borderColor: 'var(--color-border)' }}>
-            <div
-              className="w-1 h-2 rounded-full"
-              style={{
-                background: 'var(--color-text-muted)',
-                animation: 'float-2 2s ease-in-out infinite',
-              }}
-            />
-          </div>
-        </div>
-      </section>
+function LivePreview() {
+  const [apis, setApis] = useState<any[]>([]);
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    const fetchLive = async () => {
+      try {
+        const res = await fetch('/api/live/data');
+        const data = await res.json();
+        if (data.apis?.length) setApis(data.apis.slice(0, 6));
+      } catch {}
+    };
+    fetchLive();
+    interval = setInterval(fetchLive, 10000);
+    return () => clearInterval(interval);
+  }, []);
 
-      {/* ════════════════════════════════════════════════
-          LIVE ACTIVITY FEED
-      ════════════════════════════════════════════════ */}
-      <section className="py-16 px-4">
-        <div className="max-w-md mx-auto text-center">
-          <div
-            className="h-6 flex items-center justify-center"
-            style={{
-              animation: activityFade ? 'activity-fade 0.4s ease-out forwards' : 'none',
-              opacity: activityFade ? undefined : 0,
-            }}
-          >
-            <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>
-              {activityMessage.text}
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* ════════════════════════════════════════════════
-          FEATURES SECTION
-      ════════════════════════════════════════════════ */}
-      <section className="py-20 px-4">
-        <h2
-          className="text-3xl md:text-4xl font-bold text-center mb-12 tracking-tight"
-          style={{ color: 'var(--color-text-primary)' }}
-        >
-          Why WhisperLink?
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-          {FEATURES.map((feature) => (
-            <div
-              key={feature.title}
-              className="rounded-xl p-6 transition-all duration-300 hover:translate-y-[-2px]"
-              style={{
-                background: 'var(--color-bg-card)',
-                border: '1px solid var(--color-border)',
-              }}
-            >
-              <div
-                className="w-12 h-12 rounded-lg flex items-center justify-center mb-4"
-                style={{
-                  background: 'rgba(139,92,246,0.1)',
-                  color: '#8B5CF6',
-                }}
-              >
-                {feature.icon}
+  return (
+    <section className="py-20 px-4">
+      <div className="max-w-7xl mx-auto">
+        <h2 className="text-3xl font-bold text-center mb-4">Watching {apis.length || '20+'} APIs right now</h2>
+        <p className="text-center mb-10" style={{ color: 'var(--text-secondary)' }}>Real data, real checks, real time</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {apis.length > 0 ? apis.map((api: any) => (
+            <div key={api.id} className="rounded-xl border p-4 transition hover:border-blue-500/50" style={{ background: 'var(--bg-card)', borderColor: 'var(--border)' }}>
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <span className={`dot dot-${api.status}`} style={{ width: 8, height: 8 }} />
+                  <span className="font-semibold">{api.name}</span>
+                </div>
+                <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: 'var(--bg-secondary)', color: 'var(--text-secondary)' }}>{api.category}</span>
               </div>
-              <h3 className="text-lg font-semibold mb-2" style={{ color: 'var(--color-text-primary)' }}>
-                {feature.title}
-              </h3>
-              <p className="text-sm leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>
-                {feature.description}
-              </p>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div><span style={{ color: 'var(--text-tertiary)' }}>Response</span><div className="font-mono font-bold">{api.responseTime}ms</div></div>
+                <div><span style={{ color: 'var(--text-tertiary)' }}>Uptime</span><div className="font-bold" style={{ color: 'var(--success)' }}>{api.uptime}%</div></div>
+              </div>
+            </div>
+          )) : (
+            Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="rounded-xl border p-4 animate-pulse" style={{ background: 'var(--bg-card)', borderColor: 'var(--border)' }}>
+                <div className="h-4 rounded w-24 mb-3" style={{ background: 'var(--bg-secondary)' }} />
+                <div className="h-6 rounded w-16 mb-2" style={{ background: 'var(--bg-secondary)' }} />
+                <div className="h-4 rounded w-20" style={{ background: 'var(--bg-secondary)' }} />
+              </div>
+            ))
+          )}
+        </div>
+        <div className="text-center mt-8">
+          <Link href="/live" className="text-sm font-medium transition hover:underline" style={{ color: 'var(--accent)' }}>View all on Live Feed &rarr;</Link>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function Stats() {
+  const [stats, setStats] = useState({ totalChecks: 0, totalApis: 0, incidents: 0, avgResponse: 0 });
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const res = await fetch('/api/live/data');
+        const data = await res.json();
+        if (data.stats) setStats({
+          totalChecks: data.stats.checksToday || 0,
+          totalApis: data.stats.totalApis || 0,
+          incidents: data.stats.activeIncidents || 0,
+          avgResponse: data.stats.avgResponse || 0,
+        });
+      } catch {}
+    };
+    fetchStats();
+  }, []);
+
+  const items = [
+    { label: 'API Checks', value: stats.totalChecks, suffix: '+', color: 'var(--accent)' },
+    { label: 'APIs Monitored', value: stats.totalApis, suffix: '+', color: 'var(--success)' },
+    { label: 'Incidents Detected', value: stats.incidents, suffix: '', color: 'var(--warning)' },
+    { label: 'Avg Response', value: stats.avgResponse, suffix: 'ms', color: 'var(--text-primary)' },
+  ];
+
+  return (
+    <section className="py-16 px-4 border-y" style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border)' }}>
+      <div className="max-w-5xl mx-auto grid grid-cols-2 lg:grid-cols-4 gap-8 stats-grid">
+        {items.map(item => (
+          <div key={item.label} className="text-center">
+            <div className="text-3xl sm:text-4xl font-extrabold count-up" style={{ color: item.color }}>
+              <AnimatedNumber value={item.value} suffix={item.suffix} />
+            </div>
+            <div className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>{item.label}</div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function Features() {
+  const features = [
+    { icon: '&#128225;', title: 'Real-time Monitoring', desc: 'Ping every API every 30 seconds with instant alerts when anything goes wrong.' },
+    { icon: '&#129302;', title: 'AI Diagnosis', desc: 'Get root cause analysis powered by AI in seconds — not hours.' },
+    { icon: '&#128200;', title: 'Failure Prediction', desc: 'Know about outages before they happen with ML-powered risk scoring.' },
+    { icon: '&#8383;', title: 'Bitcoin Payments', desc: 'Pay with BTC or Lightning Network. No credit card required.' },
+    { icon: '&#127759;', title: 'Public Marketplace', desc: 'Share your API health with the world. Browse 20+ real APIs live.' },
+    { icon: '&#128170;', title: 'Load Testing', desc: 'Stress test your APIs under real traffic with AI-generated reports.' },
+  ];
+  return (
+    <section className="py-20 px-4">
+      <div className="max-w-6xl mx-auto">
+        <h2 className="text-3xl font-bold text-center mb-12">Everything you need to keep APIs running</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {features.map(f => (
+            <div key={f.title} className="rounded-xl border p-6 transition hover:border-blue-500/30" style={{ background: 'var(--bg-card)', borderColor: 'var(--border)' }}>
+              <div className="text-2xl mb-3" dangerouslySetInnerHTML={{ __html: f.icon }} />
+              <h3 className="font-bold text-lg mb-2">{f.title}</h3>
+              <p className="text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>{f.desc}</p>
             </div>
           ))}
         </div>
-      </section>
+      </div>
+    </section>
+  );
+}
 
-      {/* ════════════════════════════════════════════════
-          PREMIUM SECTION
-      ════════════════════════════════════════════════ */}
-      <section className="py-20 px-4">
-        <h2
-          className="text-3xl md:text-4xl font-bold text-center mb-12 tracking-tight"
-          style={{ color: 'var(--color-text-primary)' }}
-        >
-          Upgrade the experience
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
-          {/* Free plan */}
-          <div
-            className="rounded-xl p-8 flex flex-col"
-            style={{
-              background: 'var(--color-bg-card)',
-              border: '1px solid var(--color-border)',
-            }}
-          >
-            <h3 className="text-xl font-bold mb-1" style={{ color: 'var(--color-text-primary)' }}>
-              Free
-            </h3>
-            <div className="mb-6">
-              <span className="text-4xl font-black" style={{ color: 'var(--color-text-primary)' }}>$0</span>
-              <span className="text-sm ml-1" style={{ color: 'var(--color-text-muted)' }}>forever</span>
-            </div>
-            <ul className="flex-1 space-y-3 mb-8">
-              {['Unlimited chats', 'Random matching', 'Text chat'].map((f) => (
-                <li key={f} className="flex items-center gap-2 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-                  <Check className="w-4 h-4 shrink-0" style={{ color: '#10B981' }} />
-                  {f}
-                </li>
-              ))}
-            </ul>
-            <button
-              onClick={handleStartChat}
-              className="w-full py-3 rounded-xl font-semibold text-sm transition-all duration-200 cursor-pointer"
-              style={{
-                border: '1px solid var(--color-border)',
-                background: 'transparent',
-                color: 'var(--color-text-primary)',
-              }}
-            >
-              Get Started
-            </button>
-          </div>
+function IncidentTicker() {
+  const [events, setEvents] = useState<any[]>([]);
+  useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        const res = await fetch('/api/live/data');
+        const data = await res.json();
+        if (data.events?.length) setEvents(data.events.slice(0, 10));
+      } catch {}
+    };
+    fetchEvents();
+    const interval = setInterval(fetchEvents, 10000);
+    return () => clearInterval(interval);
+  }, []);
 
-          {/* Premium plan */}
-          <div
-            className="rounded-xl p-8 flex flex-col relative"
-            style={{
-              background: 'var(--color-bg-card)',
-              border: '2px solid #8B5CF6',
-            }}
-          >
-            {/* Popular badge */}
-            <div
-              className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-xs font-bold text-white"
-              style={{ background: 'linear-gradient(135deg, #8B5CF6, #6366F1)' }}
-            >
-              Popular
-            </div>
-            <h3 className="text-xl font-bold mb-1" style={{ color: 'var(--color-text-primary)' }}>
-              Premium
-            </h3>
-            <div className="mb-6">
-              <span className="text-4xl font-black" style={{ color: 'var(--color-text-primary)' }}>$4.99</span>
-              <span className="text-sm ml-1" style={{ color: 'var(--color-text-muted)' }}>/month</span>
-            </div>
-            <ul className="flex-1 space-y-3 mb-8">
-              {[
-                'Everything in Free',
-                'Gender filter',
-                'Interest matching priority',
-                'AI ice breakers',
-                'VIP rooms',
-                'No ads',
-              ].map((f) => (
-                <li key={f} className="flex items-center gap-2 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-                  <Check className="w-4 h-4 shrink-0" style={{ color: '#8B5CF6' }} />
-                  {f}
-                </li>
-              ))}
-            </ul>
-            <button
-              onClick={() => router.push('/premium')}
-              className="w-full py-3 rounded-xl font-semibold text-sm text-white transition-all duration-200 hover:scale-[1.02] cursor-pointer"
-              style={{ background: 'linear-gradient(135deg, #8B5CF6, #6366F1)' }}
-            >
-              Go Premium
-            </button>
-          </div>
-        </div>
-      </section>
-
-      {/* ════════════════════════════════════════════════
-          FOOTER
-      ════════════════════════════════════════════════ */}
-      <footer
-        className="py-12 px-4"
-        style={{ borderTop: '1px solid var(--color-border)' }}
-      >
-        <div className="max-w-4xl mx-auto text-center">
-          {/* Tagline */}
-          <p className="text-sm font-medium mb-4" style={{ color: 'var(--color-text-secondary)' }}>
-            WhisperLink — Talk freely. Stay anonymous.
-          </p>
-
-          {/* Links */}
-          <div className="flex flex-wrap justify-center gap-6 mb-6">
-            {[
-              { label: 'Privacy Policy', href: '/privacy' },
-              { label: 'Terms', href: '/terms' },
-              { label: 'Safety', href: '/safety' },
-              { label: 'Contact', href: '/contact' },
-            ].map((link) => (
-              <a
-                key={link.label}
-                href={link.href}
-                className="text-xs transition-colors duration-200"
-                style={{ color: 'var(--color-text-muted)' }}
-                onMouseEnter={(e) => {
-                  (e.target as HTMLElement).style.color = 'var(--color-text-secondary)'
-                }}
-                onMouseLeave={(e) => {
-                  (e.target as HTMLElement).style.color = 'var(--color-text-muted)'
-                }}
-              >
-                {link.label}
-              </a>
+  return (
+    <section className="py-20 px-4" style={{ background: 'var(--bg-secondary)' }}>
+      <div className="max-w-4xl mx-auto">
+        <h2 className="text-2xl font-bold text-center mb-8">Recent incidents detected across the network</h2>
+        {events.length > 0 ? (
+          <div className="space-y-2 max-h-64 overflow-y-auto">
+            {events.map((e: any, i: number) => (
+              <div key={i} className="flex items-center gap-3 rounded-lg border p-3 text-sm" style={{ background: 'var(--bg-card)', borderColor: 'var(--border)' }}>
+                <span className={`dot ${e.severity === 'high' || e.severity === 'critical' ? 'dot-down' : 'dot-slow'}`} style={{ width: 6, height: 6 }} />
+                <span className="font-medium">{e.api_name}</span>
+                <span style={{ color: 'var(--text-secondary)' }} className="truncate flex-1">{e.error_summary}</span>
+                <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: 'var(--bg-primary)', color: e.severity === 'high' || e.severity === 'critical' ? 'var(--error)' : 'var(--warning)' }}>{e.severity}</span>
+              </div>
             ))}
           </div>
+        ) : (
+          <div className="text-center py-8" style={{ color: 'var(--text-tertiary)' }}>
+            <span className="dot dot-up" style={{ width: 12, height: 12 }} />
+            <p className="mt-3">All systems operational. No recent incidents.</p>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
 
-          {/* Age notice */}
-          <p className="text-xs" style={{ color: 'var(--color-text-muted)', opacity: 0.6 }}>
-            18+ only. Please chat responsibly.
-          </p>
+function PricingPreview() {
+  const plans = [
+    { name: 'Free', price: '$0', features: ['1 API', '10min checks', 'Email alerts', 'Public status page'] },
+    { name: 'Starter', price: '$9', features: ['5 APIs', '5min checks', 'Slack alerts', 'Status page'] },
+    { name: 'Growth', price: '$19', features: ['25 APIs', '1min checks', 'Team (3)', 'AI diagnosis'], popular: true },
+    { name: 'Scale', price: '$39', features: ['Unlimited APIs', '30sec checks', 'Team (10)', 'Load testing'] },
+  ];
+  return (
+    <section className="py-20 px-4">
+      <div className="max-w-6xl mx-auto">
+        <h2 className="text-3xl font-bold text-center mb-4">Simple, transparent pricing</h2>
+        <p className="text-center mb-12" style={{ color: 'var(--text-secondary)' }}>Pay with Bitcoin. Start free, scale as you grow.</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {plans.map((p: any) => (
+            <div key={p.name} className={`rounded-xl border p-6 relative ${p.popular ? 'ring-2 ring-blue-500' : ''}`} style={{ background: 'var(--bg-card)', borderColor: p.popular ? 'var(--accent)' : 'var(--border)' }}>
+              {p.popular && <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full text-xs font-bold text-white" style={{ background: 'var(--accent)' }}>Popular</div>}
+              <h3 className="font-bold text-lg mb-1">{p.name}</h3>
+              <div className="text-3xl font-extrabold mb-4">{p.price}<span className="text-sm font-normal" style={{ color: 'var(--text-tertiary)' }}>/mo</span></div>
+              <ul className="space-y-2 mb-6">
+                {p.features.map((f: string) => (
+                  <li key={f} className="flex items-center gap-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
+                    <span style={{ color: 'var(--success)' }}>&#10003;</span> {f}
+                  </li>
+                ))}
+              </ul>
+              <Link href="/pricing" className="block w-full text-center py-2.5 rounded-lg border text-sm font-medium transition hover:bg-white/5" style={{ borderColor: 'var(--border)' }}>Get Started</Link>
+            </div>
+          ))}
         </div>
-      </footer>
+      </div>
+    </section>
+  );
+}
+
+function FinalCTA() {
+  return (
+    <section className="py-24 px-4 text-center relative overflow-hidden">
+      <div className="absolute inset-0 opacity-50" style={{ background: 'radial-gradient(ellipse at 50% 50%, rgba(59,130,246,0.1) 0%, transparent 70%)' }} />
+      <div className="relative z-10 max-w-2xl mx-auto">
+        <h2 className="text-3xl sm:text-4xl font-bold mb-4">Start monitoring your APIs in 2 minutes</h2>
+        <p className="mb-8" style={{ color: 'var(--text-secondary)' }}>Join developers already using PulseAPI to monitor 20+ real APIs.</p>
+        <Link href="/dashboard" className="inline-block px-8 py-3.5 rounded-lg text-white font-semibold text-lg transition hover:opacity-90" style={{ background: 'var(--accent)' }}>
+          Start Free
+        </Link>
+      </div>
+    </section>
+  );
+}
+
+function Footer() {
+  return (
+    <footer className="py-10 px-4 border-t" style={{ borderColor: 'var(--border)' }}>
+      <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-sm" style={{ color: 'var(--text-tertiary)' }}>
+        <div className="flex items-center gap-2">
+          <span className="dot dot-up" style={{ width: 8, height: 8 }} />
+          <span className="font-bold text-white">PulseAPI</span>
+        </div>
+        <div className="flex items-center gap-6">
+          <Link href="/live" className="hover:text-white transition">Live Feed</Link>
+          <Link href="/marketplace" className="hover:text-white transition">Marketplace</Link>
+          <Link href="/pricing" className="hover:text-white transition">Pricing</Link>
+        </div>
+        <span>Built for developers. Paid with Bitcoin.</span>
+      </div>
+    </footer>
+  );
+}
+
+export default function LandingPage() {
+  return (
+    <div>
+      <Navbar />
+      <Hero />
+      <LivePreview />
+      <Stats />
+      <Features />
+      <IncidentTicker />
+      <PricingPreview />
+      <FinalCTA />
+      <Footer />
     </div>
-  )
+  );
 }

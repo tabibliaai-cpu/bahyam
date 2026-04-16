@@ -1,6 +1,5 @@
 {
   "crons": [
-    { "path": "/api/wl/cron/cleanup", "schedule": "0 * * * *" },
-    { "path": "/api/wl/cron/matchmaker", "schedule": "* * * * *" }
+    { "path": "/api/cron/monitor", "schedule": "* * * * *" }
   ]
 }
